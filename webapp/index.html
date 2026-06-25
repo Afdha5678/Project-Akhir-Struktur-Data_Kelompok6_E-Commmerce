@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Commerce Data Structure Benchmark - Kelompok 6</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="background-effects">
+        <div class="glow-orb orb-1"></div>
+        <div class="glow-orb orb-2"></div>
+    </div>
+
+    <header>
+        <div class="header-content">
+            <h1>Sistem Manajemen Transaksi E-Commerce</h1>
+            <p class="subtitle">Tema 6 &mdash; Proyek Akhir Struktur Data</p>
+        </div>
+    </header>
+
+    <main>
+        <section class="glass-card group-info">
+            <h2>Kelompok 6</h2>
+            <div class="members-grid">
+                <div class="member"><span class="name">Harya Bagus Prayoga</span><span class="nim">M0403241066</span></div>
+                <div class="member"><span class="name">Syahwali Khan Habibi Harahap</span><span class="nim">M0403241128</span></div>
+                <div class="member"><span class="name">Afdha Auliya Atiq</span><span class="nim">M0403241163</span></div>
+                <div class="member"><span class="name">Faqih Sahar Ramadhan</span><span class="nim">M0403241165</span></div>
+            </div>
+        </section>
+
+        <!-- 1. Upload CSV Section -->
+        <section class="glass-card">
+            <h2>1. Muat Data (Upload CSV)</h2>
+            <p class="description">Upload file <code>products_300.csv</code> dan <code>transactions-2000.csv</code> untuk membangun struktur data Vector (Array) dan Unordered Map (Hash Map) secara real-time di memori.</p>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>File Produk (CSV):</label>
+                    <input type="file" id="file-products" accept=".csv">
+                </div>
+                <div class="form-group">
+                    <label>File Transaksi (CSV):</label>
+                    <input type="file" id="file-transactions" accept=".csv">
+                </div>
+            </div>
+            <button class="btn primary" id="btn-load">Bangun Struktur Data</button>
+            <div id="load-status" style="margin-top: 1rem; color: var(--accent-1); font-weight: 600;"></div>
+        </section>
+
+        <!-- 2. Manual Operations -->
+        <section class="glass-card" id="ops-section" style="opacity: 0.5; pointer-events: none;">
+            <h2>2. Lakukan Operasi Manual</h2>
+            <p class="description">Lakukan pencarian, penambahan, pembaruan, atau penghapusan data secara langsung. Kecepatan dari kedua struktur data akan diukur secara _real-time_.</p>
+            
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('search')">Search</button>
+                <button class="tab-btn" onclick="switchTab('insert')">Insert</button>
+                <button class="tab-btn" onclick="switchTab('update')">Update</button>
+                <button class="tab-btn" onclick="switchTab('delete')">Delete</button>
+            </div>
+
+            <div class="tab-container">
+                <!-- Search -->
+                <div id="tab-search" class="tab-content active">
+                    <div class="form-group">
+                        <label>Transaction ID (Misal: T00001):</label>
+                        <input type="text" id="search-tx" placeholder="T00001">
+                    </div>
+                    <button class="btn primary" onclick="doOperation('search')">Lakukan Pencarian</button>
+                </div>
+
+                <!-- Insert -->
+                <div id="tab-insert" class="tab-content">
+                    <div class="form-row">
+                        <div class="form-group"><label>Transaction ID:</label><input type="text" id="ins-tx" placeholder="T99999"></div>
+                        <div class="form-group"><label>Customer ID:</label><input type="text" id="ins-cust" placeholder="C001"></div>
+                        <div class="form-group"><label>Product ID:</label><input type="text" id="ins-prod" placeholder="P001"></div>
+                        <div class="form-group"><label>Quantity:</label><input type="number" id="ins-qty" value="1"></div>
+                    </div>
+                    <button class="btn primary" onclick="doOperation('insert')">Tambahkan Transaksi</button>
+                </div>
+
+                <!-- Update -->
+                <div id="tab-update" class="tab-content">
+                    <div class="form-row">
+                        <div class="form-group"><label>Transaction ID:</label><input type="text" id="upd-tx" placeholder="T00001"></div>
+                        <div class="form-group"><label>Product ID:</label><input type="text" id="upd-prod" placeholder="P001"></div>
+                        <div class="form-group"><label>New Quantity:</label><input type="number" id="upd-qty" value="5"></div>
+                    </div>
+                    <button class="btn primary" onclick="doOperation('update')">Update Transaksi</button>
+                </div>
+
+                <!-- Delete -->
+                <div id="tab-delete" class="tab-content">
+                    <div class="form-row">
+                        <div class="form-group"><label>Transaction ID:</label><input type="text" id="del-tx" placeholder="T00001"></div>
+                        <div class="form-group"><label>Product ID:</label><input type="text" id="del-prod" placeholder="P001"></div>
+                    </div>
+                    <button class="btn primary" onclick="doOperation('delete')">Hapus Transaksi</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Results -->
+        <section class="glass-card table-section">
+            <h2>3. Hasil Analisis (Waktu & Memori)</h2>
+            <div style="overflow-x: auto;">
+                <table class="data-table" id="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Operasi</th>
+                            <th>Waktu Vector</th>
+                            <th>Waktu Map</th>
+                            <th>Memori Vector</th>
+                            <th>Memori Map</th>
+                            <th>Visual</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <tr id="empty-row"><td colspan="6" style="text-align: center; color: var(--text-muted);">Belum ada operasi dijalankan.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 4. Visualization -->
+        <section class="glass-card demo-section" id="visualization-section" style="display: none;">
+            <h2>Visualisasi Kecepatan: <span id="current-op"></span></h2>
+            <div class="live-results" id="live-results">
+                <div class="bar-chart">
+                    <div class="bar-container">
+                        <span class="bar-label">Vector</span>
+                        <div class="bar-track"><div class="bar-fill vector-fill" id="vector-bar"></div></div>
+                        <span class="bar-value" id="vector-val">0 ms</span>
+                    </div>
+                    <div class="bar-container">
+                        <span class="bar-label">Unordered Map</span>
+                        <div class="bar-track"><div class="bar-fill map-fill" id="map-bar"></div></div>
+                        <span class="bar-value" id="map-val">0 ms</span>
+                    </div>
+                </div>
+                <div class="verdict" id="verdict-box"></div>
+            </div>
+        </section>
+    </main>
+    <script src="script.js"></script>
+</body>
+</html>
