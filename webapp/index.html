@@ -170,8 +170,10 @@
 
         <!-- 4. Visualization -->
         <section class="glass-card demo-section" id="visualization-section" style="display: none;">
-            <h2>Visualisasi Kecepatan: <span id="current-op"></span></h2>
-            <div class="live-results" id="live-results">
+            <h2>Visualisasi: <span id="current-op"></span></h2>
+            
+            <h3 style="margin-top: 1rem; color: var(--text-muted); font-size: 1rem;">Perbandingan Waktu Eksekusi</h3>
+            <div class="live-results" id="live-results-time">
                 <div class="bar-chart">
                     <div class="bar-container">
                         <span class="bar-label">Vector</span>
@@ -184,8 +186,25 @@
                         <span class="bar-value" id="map-val">0 ms</span>
                     </div>
                 </div>
-                <div class="verdict" id="verdict-box"></div>
             </div>
+
+            <h3 style="margin-top: 1.5rem; color: var(--text-muted); font-size: 1rem;">Perbandingan Penggunaan Memori</h3>
+            <div class="live-results" id="live-results-mem">
+                <div class="bar-chart">
+                    <div class="bar-container">
+                        <span class="bar-label">Vector</span>
+                        <div class="bar-track"><div class="bar-fill vector-fill" id="vector-mem-bar" style="background: linear-gradient(90deg, #3b82f6, #60a5fa);"></div></div>
+                        <span class="bar-value" id="vector-mem-val">0 B</span>
+                    </div>
+                    <div class="bar-container">
+                        <span class="bar-label">Unordered Map</span>
+                        <div class="bar-track"><div class="bar-fill map-fill" id="map-mem-bar" style="background: linear-gradient(90deg, #3b82f6, #60a5fa);"></div></div>
+                        <span class="bar-value" id="map-mem-val">0 B</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="verdict" id="verdict-box" style="margin-top: 1.5rem;"></div>
         </section>
     </main>
     <script src="script.js"></script>

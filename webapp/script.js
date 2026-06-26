@@ -400,13 +400,13 @@ function addTableRow(op, vecTime, mapTime, vecMem, mapMem) {
         <td>${fmtT(mapTime, vecTime)}</td>
         <td>${fmtM(vecMem, mapMem)}</td>
         <td>${fmtM(mapMem, vecMem)}</td>
-        <td><button class="btn btn-small" onclick="visualize('${op}', ${vecTime}, ${mapTime})">Lihat</button></td>
+        <td><button class="btn btn-small" onclick="visualize('${op}', ${vecTime}, ${mapTime}, ${vecMem}, ${mapMem})">Lihat</button></td>
     `;
     tbody.appendChild(tr);
-    visualize(op, vecTime, mapTime);
+    visualize(op, vecTime, mapTime, vecMem, mapMem);
 }
 
-function visualize(operation, vecTime, mapTime) {
+function visualize(operation, vecTime, mapTime, vecMem, mapMem) {
     const sec = document.getElementById('visualization-section');
     sec.style.display = 'block';
     sec.scrollIntoView({ behavior: 'smooth' });
@@ -414,16 +414,20 @@ function visualize(operation, vecTime, mapTime) {
     document.getElementById('current-op').textContent = operation.toUpperCase();
     const vBar = document.getElementById('vector-bar');
     const mBar = document.getElementById('map-bar');
+    const vMemBar = document.getElementById('vector-mem-bar');
+    const mMemBar = document.getElementById('map-mem-bar');
     
     // reset
     vBar.style.width = '0%';
     mBar.style.width = '0%';
+    vMemBar.style.width = '0%';
+    mMemBar.style.width = '0%';
     
     setTimeout(() => {
         const maxMs = Math.max(vecTime, mapTime);
-        let vPct = (vecTime / maxMs) * 100;
-        let mPct = (mapTime / maxMs) * 100;
-        if (vPct < 3) vPct = 3; if (mPct < 3) mPct = 3;
+        let vPct = maxMs === 0 ? 0 : (vecTime / maxMs) * 100;
+        let mPct = maxMs === 0 ? 0 : (mapTime / maxMs) * 100;
+        if (vPct > 0 && vPct < 3) vPct = 3; if (mPct > 0 && mPct < 3) mPct = 3;
 
         vBar.style.width = `${vPct}%`;
         mBar.style.width = `${mPct}%`;
@@ -431,8 +435,20 @@ function visualize(operation, vecTime, mapTime) {
         document.getElementById('vector-val').textContent = vecTime.toFixed(4) + ' ms';
         document.getElementById('map-val').textContent = mapTime.toFixed(4) + ' ms';
 
-        let win = vecTime < mapTime ? 'Vector' : 'Map';
-        document.getElementById('verdict-box').innerHTML = `Untuk <strong>${operation}</strong>, <strong>${win}</strong> lebih cepat dalam simulasi memori ini.`;
+        const maxMem = Math.max(vecMem, mapMem);
+        let vMemPct = maxMem === 0 ? 0 : (vecMem / maxMem) * 100;
+        let mMemPct = maxMem === 0 ? 0 : (mapMem / maxMem) * 100;
+        if (vMemPct > 0 && vMemPct < 3) vMemPct = 3; if (mMemPct > 0 && mMemPct < 3) mMemPct = 3;
+
+        vMemBar.style.width = `${vMemPct}%`;
+        mMemBar.style.width = `${mMemPct}%`;
+        
+        document.getElementById('vector-mem-val').textContent = vecMem.toLocaleString() + ' B';
+        document.getElementById('map-mem-val').textContent = mapMem.toLocaleString() + ' B';
+
+        let winTime = vecTime <= mapTime ? 'Vector' : 'Map';
+        let winMem = vecMem <= mapMem ? 'Vector' : 'Map';
+        document.getElementById('verdict-box').innerHTML = `Untuk <strong>${operation}</strong>:<br>⏱️ Waktu: <strong>${winTime}</strong> lebih cepat.<br>💾 Memori: <strong>${winMem}</strong> lebih efisien.`;
     }, 100);
 }
 
