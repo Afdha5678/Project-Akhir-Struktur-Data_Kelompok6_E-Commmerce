@@ -4,10 +4,20 @@ let mapTransactionsArray = []; // Base array for Hash Map
 let mapIndex = new Map(); // Simulating unordered_map<string, array_of_indexes>
 
 // Utils
-function parseCSV(text) {
+function parseCSV(text, expectedHeaders) {
     const lines = text.trim().split('\n');
-    const headers = lines[0].split(',').map(h => h.trim());
-    return lines.slice(1).map(line => {
+    let firstLine = lines[0].split(',').map(h => h.trim());
+    let headers, startIndex;
+    
+    if (firstLine[0].match(/^[PT]\d+/)) {
+        headers = expectedHeaders;
+        startIndex = 0;
+    } else {
+        headers = firstLine;
+        startIndex = 1;
+    }
+    
+    return lines.slice(startIndex).map(line => {
         const values = line.split(',');
         let obj = {};
         headers.forEach((h, i) => obj[h] = values[i] ? values[i].trim() : '');
@@ -30,11 +40,11 @@ document.getElementById('btn-load').addEventListener('click', () => {
 
     const reader1 = new FileReader();
     reader1.onload = (e) => {
-        products = parseCSV(e.target.result);
+        products = parseCSV(e.target.result, ['productId', 'productName', 'category']);
         
         const reader2 = new FileReader();
         reader2.onload = (ev) => {
-            const txData = parseCSV(ev.target.result);
+            const txData = parseCSV(ev.target.result, ['transactionId', 'customerId', 'date', 'productId', 'productName', 'category', 'quantity']);
             
             // Build Vector
             const startVec = performance.now();
@@ -93,6 +103,7 @@ function doOperation(opType) {
 
     let timeVec = 0;
     let timeMap = 0;
+    let resultData = null;
     
     if (opType === 'search') {
         const txId = document.getElementById('search-tx').value;
@@ -116,6 +127,7 @@ function doOperation(opType) {
             if (indexes) {
                 for (let i = 0; i < indexes.length; i++) res.push(mapTransactionsArray[indexes[i]]);
             }
+            if (k === 0) resultData = res;
         }
         timeMap = performance.now() - mStart;
 
@@ -206,11 +218,170 @@ function doOperation(opType) {
             }
         }
         timeMap = performance.now() - mStart;
+    } else if (opType === 'search_cust') {
+        const custId = document.getElementById('search-cust-id').value;
+        if (!custId) return alert("Isi Customer ID");
+        const vStart = performance.now();
+        for(let k=0; k<REPEAT_COUNT; k++) {
+            let res = [];
+            for (let i = 0; i < vectorTransactions.length; i++) {
+                if (vectorTransactions[i].customerId === custId) res.push(vectorTransactions[i]);
+            }
+        }
+        timeVec = performance.now() - vStart;
+        const mStart = performance.now();
+        for(let k=0; k<REPEAT_COUNT; k++) {
+            let res = [];
+            for (let i = 0; i < mapTransactionsArray.length; i++) {
+                if (mapTransactionsArray[i].customerId === custId) res.push(mapTransactionsArray[i]);
+            }
+            if (k === 0) resultData = res;
+        }
+        timeMap = performance.now() - mStart;
+    } else if (opType === 'search_prod') {
+        const prodId = document.getElementById('search-prod-id').value;
+        if (!prodId) return alert("Isi Product ID");
+        const vStart = performance.now();
+        for(let k=0; k<REPEAT_COUNT; k++) {
+            let res = [];
+            for (let i = 0; i < vectorTransactions.length; i++) {
+                if (vectorTransactions[i].productId === prodId) res.push(vectorTransactions[i]);
+            }
+        }
+        timeVec = performance.now() - vStart;
+        const mStart = performance.now();
+        for(let k=0; k<REPEAT_COUNT; k++) {
+            let res = [];
+            for (let i = 0; i < mapTransactionsArray.length; i++) {
+                if (mapTransactionsArray[i].productId === prodId) res.push(mapTransactionsArray[i]);
+            }
+            if (k === 0) resultData = res;
+        }
+        timeMap = performance.now() - mStart;
+    } else if (opType === 'top_n') {
+        const nVal = parseInt(document.getElementById('top-n-val').value) || 5;
+        const vStart = performance.now();
+        for(let k=0; k<20; k++) { 
+            let freqs = [];
+            for (let i = 0; i < vectorTransactions.length; i++) {
+                let pid = vectorTransactions[i].productId;
+                let found = false;
+                for(let j=0; j<freqs.length; j++){
+                    if(freqs[j].id === pid) { freqs[j].count++; found = true; break; }
+                }
+                if(!found) freqs.push({id: pid, count: 1});
+            }
+            freqs.sort((a,b) => b.count - a.count);
+            let top = freqs.slice(0, nVal);
+        }
+        timeVec = performance.now() - vStart;
+        const mStart = performance.now();
+        for(let k=0; k<20; k++) {
+            let freqMap = new Map();
+            for (let i = 0; i < mapTransactionsArray.length; i++) {
+                let pid = mapTransactionsArray[i].productId;
+                freqMap.set(pid, (freqMap.get(pid) || 0) + 1);
+            }
+            let freqs = Array.from(freqMap, ([id, count]) => ({id, count}));
+            freqs.sort((a,b) => b.count - a.count);
+            let top = freqs.slice(0, nVal);
+            if (k === 0) resultData = top;
+        }
+        timeMap = performance.now() - mStart;
+    } else if (opType === 'fbt') {
+        const vStart = performance.now();
+        for(let k=0; k<5; k++) {
+            let txGroups = [];
+            for(let i=0; i<vectorTransactions.length; i++) {
+                let tid = vectorTransactions[i].transactionId;
+                let pid = vectorTransactions[i].productId;
+                let found = false;
+                for(let j=0; j<txGroups.length; j++){
+                    if(txGroups[j].tx === tid) { txGroups[j].prods.push(pid); found = true; break; }
+                }
+                if(!found) txGroups.push({tx: tid, prods: [pid]});
+            }
+            let pairFreq = [];
+            for(let g=0; g<txGroups.length; g++) {
+                let prods = txGroups[g].prods;
+                for(let i=0; i<prods.length; i++){
+                    for(let j=i+1; j<prods.length; j++){
+                        let p1 = prods[i], p2 = prods[j];
+                        if(p1 > p2) { let temp = p1; p1=p2; p2=temp; }
+                        let pairId = p1 + "-" + p2;
+                        let found = false;
+                        for(let x=0; x<pairFreq.length; x++){
+                            if(pairFreq[x].id === pairId) { pairFreq[x].count++; found = true; break;}
+                        }
+                        if(!found) pairFreq.push({id: pairId, count: 1});
+                    }
+                }
+            }
+        }
+        timeVec = performance.now() - vStart;
+        const mStart = performance.now();
+        for(let k=0; k<5; k++) {
+            let txMap = new Map();
+            for(let i=0; i<mapTransactionsArray.length; i++) {
+                let tid = mapTransactionsArray[i].transactionId;
+                let pid = mapTransactionsArray[i].productId;
+                if(!txMap.has(tid)) txMap.set(tid, []);
+                txMap.get(tid).push(pid);
+            }
+            let pairMap = new Map();
+            for (let [tid, prods] of txMap.entries()) {
+                for(let i=0; i<prods.length; i++){
+                    for(let j=i+1; j<prods.length; j++){
+                        let p1 = prods[i], p2 = prods[j];
+                        if(p1 > p2) { let temp = p1; p1=p2; p2=temp; }
+                        let pairId = p1 + "-" + p2;
+                        pairMap.set(pairId, (pairMap.get(pairId) || 0) + 1);
+                    }
+                }
+            }
+            if (k === 0) {
+                resultData = Array.from(pairMap, ([id, count]) => ({id, count})).sort((a,b) => b.count - a.count).slice(0, 10);
+            }
+        }
+        timeMap = performance.now() - mStart;
     }
 
     // Display
     const mem = estimateMemory(vectorTransactions.length, mapTransactionsArray.length, mapIndex.size);
     addTableRow(opType, timeVec, timeMap, mem.vecBytes, mem.mapBytes);
+    
+    // Show Visual Result Data
+    if (resultData && resultData.length > 0) {
+        showVisualResult(opType, resultData);
+    } else if (resultData && resultData.length === 0) {
+        openModal("Hasil " + opType, "Tidak ada data yang ditemukan.");
+    } else if (opType === 'insert' || opType === 'update' || opType === 'delete') {
+        openModal("Hasil " + opType, "Operasi berhasil dijalankan.");
+    }
+}
+
+function showVisualResult(opType, data) {
+    let text = "";
+    if (opType === 'search' || opType === 'search_cust' || opType === 'search_prod') {
+        text = "TransactionID | CustomerID | ProductID | Quantity\n";
+        text += "--------------------------------------------------\n";
+        data.forEach(t => {
+            text += `${t.transactionId} | ${t.customerId} | ${t.productId} | ${t.quantity}\n`;
+        });
+    } else if (opType === 'top_n') {
+        text = "ProductID | Total Terjual\n";
+        text += "-------------------------\n";
+        data.forEach(t => {
+            text += `${t.id} | ${t.count}\n`;
+        });
+    } else if (opType === 'fbt') {
+        text = "Pasangan Produk | Frekuensi Muncul Bersama\n";
+        text += "------------------------------------------\n";
+        data.forEach(t => {
+            text += `${t.id} | ${t.count}\n`;
+        });
+    }
+    openModal("Hasil " + opType.toUpperCase(), text);
 }
 
 function addTableRow(op, vecTime, mapTime, vecMem, mapMem) {
@@ -264,3 +435,59 @@ function visualize(operation, vecTime, mapTime) {
         document.getElementById('verdict-box').innerHTML = `Untuk <strong>${operation}</strong>, <strong>${win}</strong> lebih cepat dalam simulasi memori ini.`;
     }, 100);
 }
+
+// Utilities for showing modal and downloading
+function openModal(title, content) {
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').textContent = content;
+    document.getElementById('data-modal').style.display = 'flex';
+}
+
+function showAllTransactions() {
+    if(vectorTransactions.length === 0) return alert("Belum ada data.");
+    let text = "TransactionID | CustomerID | ProductID | Quantity\n";
+    text += "--------------------------------------------------\n";
+    let limit = Math.min(vectorTransactions.length, 100);
+    for(let i=0; i<limit; i++) {
+        let t = vectorTransactions[i];
+        text += `${t.transactionId} | ${t.customerId} | ${t.productId} | ${t.quantity}\n`;
+    }
+    if (vectorTransactions.length > limit) text += `\n... dan ${vectorTransactions.length - limit} data lainnya.`;
+    openModal("Semua Transaksi (Preview)", text);
+}
+
+function showAllProducts() {
+    if(products.length === 0) return alert("Belum ada data master produk.");
+    let text = "ProductID | Name | Price | Category\n";
+    text += "--------------------------------------\n";
+    let limit = Math.min(products.length, 100);
+    for(let i=0; i<limit; i++) {
+        let p = products[i];
+        let name = p.name || p.productName || "";
+        let price = p.price || "";
+        let cat = p.category || "";
+        text += `${p.productId} | ${name} | ${price} | ${cat}\n`;
+    }
+    if (products.length > limit) text += `\n... dan ${products.length - limit} data lainnya.`;
+    openModal("Master Produk (Preview)", text);
+}
+
+function saveTransactions() {
+    if(vectorTransactions.length === 0) return alert("Belum ada data.");
+    let csvContent = "data:text/csv;charset=utf-8,";
+    // Check if there are keys in the first object, otherwise use default
+    let keys = Object.keys(vectorTransactions[0]);
+    csvContent += keys.join(",") + "\n";
+    vectorTransactions.forEach(t => {
+        let values = keys.map(k => t[k]);
+        csvContent += values.join(",") + "\n";
+    });
+    var encodedUri = encodeURI(csvContent);
+    var link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "transactions_saved.csv");
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+}
+

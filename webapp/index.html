@@ -54,11 +54,15 @@
             <h2>2. Lakukan Operasi Manual</h2>
             <p class="description">Lakukan pencarian, penambahan, pembaruan, atau penghapusan data secara langsung. Kecepatan dari kedua struktur data akan diukur secara _real-time_.</p>
             
-            <div class="tabs">
-                <button class="tab-btn active" onclick="switchTab('search')">Search</button>
+            <div class="tabs" style="flex-wrap: wrap; gap: 0.5rem; justify-content: center; display: flex;">
+                <button class="tab-btn active" onclick="switchTab('search')">Search Tx</button>
+                <button class="tab-btn" onclick="switchTab('search_cust')">Search Cust</button>
+                <button class="tab-btn" onclick="switchTab('search_prod')">Search Prod</button>
                 <button class="tab-btn" onclick="switchTab('insert')">Insert</button>
                 <button class="tab-btn" onclick="switchTab('update')">Update</button>
                 <button class="tab-btn" onclick="switchTab('delete')">Delete</button>
+                <button class="tab-btn" onclick="switchTab('top_n')">Top-N</button>
+                <button class="tab-btn" onclick="switchTab('fbt')">FBT</button>
             </div>
 
             <div class="tab-container">
@@ -100,6 +104,45 @@
                     </div>
                     <button class="btn primary" onclick="doOperation('delete')">Hapus Transaksi</button>
                 </div>
+                
+                <!-- Search by Customer -->
+                <div id="tab-search_cust" class="tab-content">
+                    <div class="form-group">
+                        <label>Customer ID (Misal: C001):</label>
+                        <input type="text" id="search-cust-id" placeholder="C001">
+                    </div>
+                    <button class="btn primary" onclick="doOperation('search_cust')">Pencarian Customer</button>
+                </div>
+
+                <!-- Search by Product -->
+                <div id="tab-search_prod" class="tab-content">
+                    <div class="form-group">
+                        <label>Product ID (Misal: P001):</label>
+                        <input type="text" id="search-prod-id" placeholder="P001">
+                    </div>
+                    <button class="btn primary" onclick="doOperation('search_prod')">Pencarian Product</button>
+                </div>
+                
+                <!-- Top N -->
+                <div id="tab-top_n" class="tab-content">
+                    <div class="form-group">
+                        <label>Top N Produk (Misal: 5):</label>
+                        <input type="number" id="top-n-val" value="5">
+                    </div>
+                    <button class="btn primary" onclick="doOperation('top_n')">Cari Top-N Produk</button>
+                </div>
+
+                <!-- Frequently Bought Together -->
+                <div id="tab-fbt" class="tab-content">
+                    <p class="description" style="font-size:0.9rem; margin-bottom:1rem;">Analisis pasangan produk yang sering dibeli bersamaan dalam satu transaksi yang sama.</p>
+                    <button class="btn primary" onclick="doOperation('fbt')">Analisis Frequently Bought Together</button>
+                </div>
+            </div>
+            
+            <div class="utility-actions" style="margin-top: 1.5rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <button class="btn" style="background: var(--surface-light); color: white;" onclick="showAllTransactions()">Tampilkan Semua Transaksi</button>
+                <button class="btn" style="background: var(--surface-light); color: white;" onclick="showAllProducts()">Tampilkan Master Produk</button>
+                <button class="btn" style="background: var(--surface-light); color: white;" onclick="saveTransactions()">Simpan Transaksi</button>
             </div>
         </section>
 
@@ -146,5 +189,14 @@
         </section>
     </main>
     <script src="script.js"></script>
+
+    <!-- Modal for Data Display -->
+    <div id="data-modal" class="modal" style="display: none;">
+        <div class="modal-content glass-card">
+            <span class="close-btn" onclick="document.getElementById('data-modal').style.display='none'">&times;</span>
+            <h2 id="modal-title">Data</h2>
+            <div id="modal-body" style="flex: 1; overflow-y: auto; font-family: monospace; font-size: 14px; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; white-space: pre-wrap;"></div>
+        </div>
+    </div>
 </body>
 </html>
